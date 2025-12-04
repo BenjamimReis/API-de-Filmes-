@@ -1,0 +1,26 @@
+import { MovieSQL } from '../models/Movie';
+import { Sequelize } from 'sequelize';
+
+const sequelize = new Sequelize(process.env.POSTGRES_URI || 'postgres://user:pass@postgres:5432/movies');
+const Movie = MovieSQL(sequelize);
+
+const resolvers = {
+  Query: {
+    movies: async () => await Movie.findAll(),
+    movie: async (_: any, { id }: { id: string }) => await Movie.findByPk(id),
+  },
+  Mutation: {
+    addMovie: async (_: any, { title, genre, year }: any) => {
+      return await Movie.create({ title, genre, year });
+    },
+    rateMovie: async (_: any, { id, rating }: any) => {
+      const movie = await Movie.findByPk(id);
+      if (!movie) throw new Error('Movie not found');
+      movie.rating = rating;
+      await movie.save();
+      return movie;
+    },
+  },
+};
+
+export default resolvers;
